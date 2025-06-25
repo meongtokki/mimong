@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>주간 레이드 체크</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 1200px;
+      margin: 40px auto;
+      background: linear-gradient(135deg, #e0f7fa, #fff3e0);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #global-total {
+      text-align: center;
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .person {
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      color: white;
+      background-size: cover;
+      background-position: center;
+      text-shadow: 1px 1px 2px black;
+    }
+    .person h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+    .raid {
+      margin: 10px 0;
+      padding: 10px;
+      background: rgba(255,255,255,0.3);
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    label {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+    }
+    .total {
+      font-weight: bold;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="global-total">전체 체크 골드: 0 G / 전체 가능 골드: 0 G</div>
+<div class="container" id="person-container"></div>
+
+<script>
+const raidList = {
+  아이미님: [
+    { name: "에기르 하드", gold: 24500 },
+    { name: "아브렐슈드 하드", gold: 30500 },
+    { name: "모로둠 하드", gold: 38000 }
+  ],
+  천유솜: [
+    { name: "에기르 하드", gold: 24500 },
+    { name: "아브렐슈드 노말", gold: 21500 },
+    { name: "모르둠 노말", gold: 28000 }
+  ],
+  아이미츄: [
+    { name: "에기르 하드", gold: 24500 },
+    { name: "아브렐슈드 노말", gold: 21500 },
+    { name: "모르둠 노말", gold: 28000 }
+  ],
+  크앙아이미: [
+    { name: "에기르 노말", gold: 15500 },
+    { name: "아브렐슈드 노말", gold: 21500 },
+    { name: "베히모스", gold: 8800 }
+  ],
+  그래도새로운봄이오겠죠: [
+    { name: "에기르 노말", gold: 15500 },
+    { name: "베히모스", gold: 8800 },
+    { name: "에키드나", gold: 8800 }
+  ],
+  난그대모든모습이좋거든요: [
+    { name: "카멘", gold: 8000 },
+    { name: "베히모스", gold: 8800 },
+    { name: "에키드나", gold: 8800 }
+  ]
+};
+
+const backgrounds = {
+  아이미님: "https://img.lostark.co.kr/armory/2/610FB3FD34FFC62AA8055AADBE70C3BB6C07AABF1A1D106986FB7CA530052DBD.jpg?v=20250623112339",
+  천유솜: "https://img.lostark.co.kr/armory/8/5DC04FCE2B950BEE6C52E609089CFDE33ED13B46D7C07E5F5936E257C5F3B5F0.jpg?v=20250508150205",
+  아이미츄:"https://img.lostark.co.kr/armory/7/AEF1CC1215B0167AB8623F77C4E2F397D09004842CB601243F11BB01BFFDA95A.jpg?v=20250625102912",
+  크앙아이미:"https://img.lostark.co.kr/armory/9/5961FB83B1CE33E77E207819981F824875F9A47B6AC74556A0A08BC989BA7A8D.jpg?v=20250623085529",
+  그래도새로운봄이오겠죠:"https://img.lostark.co.kr/armory/1/53DABBE9B5FCE7ED64CCD5364B4B4DA28D6685C08EBB4E8ACDB20B06C762C6C2.jpg?v=20250506172955",
+  난그대모든모습이좋거든요:"https://img.lostark.co.kr/armory/1/45AA9BAB79D551C27D5E9B2D21376405ECCE447DC6177CAE8EE0200DE2312C99.jpg?v=20250427034253"
+};
+
+function createPerson(name, idPrefix, raids) {
+  const person = document.createElement('div');
+  person.className = 'person';
+
+  if (backgrounds[name]) {
+    person.style.backgroundImage = `url(${backgrounds[name]})`;
+    if (name === '그래도새로운봄이오겠죠') {
+      person.style.backgroundPosition = 'center 30%';
+    }
+  } else {
+    person.style.background = '#333';
+  }
+
+  let html = `<h3>${name}</h3><div class="total" id="${idPrefix}-total">총 골드: 0 G</div>`;
+  raids.forEach((raid, i) => {
+    html += `
+      <div class="raid" data-gold="${raid.gold}">
+        <label><input type="checkbox" class="raid-check" data-person="${idPrefix}" data-index="${i}"> ${raid.name} (${raid.gold.toLocaleString()}G)</label>
+      </div>`;
+  });
+  person.innerHTML = html;
+  return person;
+}
+
+function updateTotal(idPrefix) {
+  const checkboxes = document.querySelectorAll(`input[data-person='${idPrefix}']`);
+  let total = 0;
+  checkboxes.forEach(cb => {
+    if (cb.checked) {
+      const gold = parseInt(cb.closest('.raid').dataset.gold);
+      total += gold;
+    }
+  });
+  document.getElementById(`${idPrefix}-total`).textContent = `총 골드: ${total.toLocaleString()} G`;
+  updateGlobalTotal();
+  saveState();
+}
+
+function updateGlobalTotal() {
+  const checkboxes = document.querySelectorAll('.raid-check');
+  let checkedTotal = 0;
+  let totalPossible = 0;
+  checkboxes.forEach(cb => {
+    const gold = parseInt(cb.closest('.raid').dataset.gold);
+    totalPossible += gold;
+    if (cb.checked) {
+      checkedTotal += gold;
+    }
+  });
+  document.getElementById('global-total').textContent = `전체 체크 골드: ${checkedTotal.toLocaleString()} G / 전체 가능 골드: ${totalPossible.toLocaleString()} G`;
+}
+
+function saveState() {
+  const allStates = {};
+  document.querySelectorAll('.raid-check').forEach(cb => {
+    const key = cb.dataset.person + '-' + cb.dataset.index;
+    allStates[key] = cb.checked;
+  });
+  localStorage.setItem('raidCheckState', JSON.stringify(allStates));
+}
+
+function loadState() {
+  const saved = JSON.parse(localStorage.getItem('raidCheckState') || '{}');
+  document.querySelectorAll('.raid-check').forEach(cb => {
+    const key = cb.dataset.person + '-' + cb.dataset.index;
+    if (saved[key]) cb.checked = true;
+  });
+}
+
+function checkReset() {
+  const lastReset = localStorage.getItem('lastReset');
+  const now = new Date();
+  const nextReset = new Date(now);
+  const day = now.getDay();
+  const hour = now.getHours();
+
+  nextReset.setDate(now.getDate() + ((3 - day + 7) % 7));
+  nextReset.setHours(6, 0, 0, 0);
+  if (day === 3 && hour >= 6) nextReset.setDate(nextReset.getDate() + 7);
+
+  if (!lastReset || now > new Date(lastReset)) {
+    localStorage.setItem('raidCheckState', JSON.stringify({}));
+    localStorage.setItem('lastReset', nextReset);
+  }
+}
+
+checkReset();
+
+const container = document.getElementById('person-container');
+Object.entries(raidList).forEach(([name, raids], index) => {
+  const personDiv = createPerson(name, 'p' + index, raids);
+  container.appendChild(personDiv);
+});
+
+loadState();
+document.querySelectorAll('.raid-check').forEach(cb => {
+  cb.addEventListener('change', () => updateTotal(cb.dataset.person));
+});
+document.querySelectorAll('[id$="-total"]').forEach(totalDiv => {
+  updateTotal(totalDiv.id.replace('-total', ''));
+});
+</script>
+
+</body>
+</html>
